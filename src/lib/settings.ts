@@ -13,13 +13,18 @@ export const DEFAULT_SETTINGS: Settings = {
   taskDueTime: "08:00",
   quietStart: "22:00",
   quietEnd: "07:00",
-  notify: { tasksDue: true, taskReminder: true, countdownMilestone: true },
+  notify: { morningDigest: true, taskReminder: true, countdownMilestone: true },
   ai: { weights: true, highlights: true, highlightsIncludeNotes: false },
 };
 
 export async function getSettings(): Promise<Settings> {
   const row = await db.query.settings.findFirst({ where: eq(schema.settings.id, 1) });
   const stored = (row?.value ?? {}) as Partial<Settings>;
+  // Before the morning digest, its switch was "tasksDue".
+  const legacy = stored.notify as { tasksDue?: boolean } | undefined;
+  if (stored.notify && legacy?.tasksDue !== undefined && stored.notify.morningDigest === undefined) {
+    stored.notify = { ...stored.notify, morningDigest: legacy.tasksDue };
+  }
   return {
     ...DEFAULT_SETTINGS,
     ...stored,

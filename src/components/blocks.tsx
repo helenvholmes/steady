@@ -17,7 +17,7 @@ import {
   weeklyAverages,
   type MetricShape,
 } from "@/lib/metrics";
-import { sortOpen, taskWhen } from "@/lib/tasks";
+import { repeatLabel, sortOpen, taskWhen } from "@/lib/tasks";
 import { MetricChart } from "./metric-chart";
 import { Notes } from "./notes";
 import { StatusBadge } from "./status-badge";
@@ -287,7 +287,15 @@ function TaskRowItem({ task, today }: { task: TaskRow; today: string }) {
       <Link href={`/tasks/${task.id}`} className={`min-w-0 flex-1 truncate ${task.done ? "text-muted line-through" : ""}`}>
         {task.title}
       </Link>
-      <span className="shrink-0 text-xs text-muted">{task.done ? "" : taskWhen(task, today)}</span>
+      <span className="shrink-0 text-xs text-muted">
+        {task.repeat && (
+          <span title={repeatLabel(task.repeat)} className="mr-1">
+            <span aria-hidden>↻</span>
+            <span className="sr-only">{repeatLabel(task.repeat)}. </span>
+          </span>
+        )}
+        {task.done ? "" : taskWhen(task, today)}
+      </span>
     </li>
   );
 }

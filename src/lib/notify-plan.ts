@@ -5,7 +5,7 @@ import { localClock, localDay, timeToMinutes } from "./dates";
  * sent and today's counts, and sends what this returns.
  *
  * Rules (REQUIREMENTS.md, "Notifications"):
- * - At most 5 a day. Priority: tasks due, task reminders, countdown milestones. (Reminders, money reminders,
+ * - At most 5 a day. Priority: morning digest, task reminders, countdown milestones. (Reminders, money reminders,
  *   and check-ins arrive in later phases.)
  * - Nothing during quiet hours.
  * - Each type has its own on/off switch.
@@ -17,7 +17,7 @@ import { localClock, localDay, timeToMinutes } from "./dates";
 export const MAX_PER_DAY = 5;
 export const LATE_WINDOW_MIN = 90;
 
-const PRIORITY = { tasksDue: 1, taskReminder: 2, countdownMilestone: 3 } as const;
+const PRIORITY = { morningDigest: 1, taskReminder: 2, countdownMilestone: 3 } as const;
 export type NotificationType = keyof typeof PRIORITY;
 
 export type Planned = { key: string; type: NotificationType; title: string; body: string; url: string };
@@ -35,10 +35,13 @@ export type PlanInput = {
   sentToday: number;
   /** Open tasks due today, on active goals. */
   tasksDueToday: number;
+  /** Future goals whose start-by date is today. */
+  futureGoalsReady: number;
   /** Open tasks due tomorrow that asked for a reminder the day before. */
   remindersForTomorrow: number;
-  /** When every counted task is on one goal, tapping the notification opens that goal; otherwise home. */
-  tasksDueGoalId?: number | null;
+  /** When everything in the digest is on one goal, tapping the notification opens that goal; otherwise home. */
+  digestGoalId?: number | null;
+  /** Likewise for the day-before reminders. */
   remindersGoalId?: number | null;
   /** Countdown milestones reached today or yesterday (a missed tick), e.g. [{ goalId: 1, mark: 365 }]. */
   countdownMilestones: { goalId: number; mark: number }[];
@@ -58,6 +61,19 @@ function dueAt(minutes: number, time: string) {
 
 const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
 
+/**
+ * The morning digest's one line, or null when there's nothing to say. "2 tasks are due today.",
+ * "1 future goal is ready to start.", or both: "3 tasks due today · 1 future goal ready to start".
+ */
+export function digestBody(tasks: number, futureGoals: number): string | null {
+  if (tasks > 0 && futureGoals > 0) {
+    return `${plural(tasks, "task", "tasks")} due today · ${plural(futureGoals, "future goal", "future goals")} ready to start`;
+  }
+  if (tasks > 0) return `${plural(tasks, "task is", "tasks are")} due today.`;
+  if (futureGoals > 0) return `${plural(futureGoals, "future goal is", "future goals are")} ready to start.`;
+  return null;
+}
+
 export function planNotifications(input: PlanInput): Planned[] {
   const { now, settings, sentKeys, sentToday } = input;
   const { minutes } = localClock(now);
@@ -66,13 +82,14 @@ export function planNotifications(input: PlanInput): Planned[] {
   const due: Planned[] = [];
   const atTaskTime = dueAt(minutes, settings.taskDueTime);
 
-  if (settings.notify.tasksDue && atTaskTime && input.tasksDueToday > 0) {
+  const digest = digestBody(input.tasksDueToday, input.futureGoalsReady);
+  if (settings.notify.morningDigest && atTaskTime && digest) {
     due.push({
-      key: `tasksDue:${today}`,
-      type: "tasksDue",
+      key: `morningDigest:${today}`,
+      type: "morningDigest",
       title: "Steady",
-      body: `${plural(input.tasksDueToday, "task is", "tasks are")} due today.`,
-      url: input.tasksDueGoalId ? `/goals/${input.tasksDueGoalId}` : "/",
+      body: digest,
+      url: input.digestGoalId ? `/goals/${input.digestGoalId}` : "/",
     });
   }
   if (settings.notify.taskReminder && atTaskTime && input.remindersForTomorrow > 0) {

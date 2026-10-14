@@ -83,7 +83,7 @@ export default async function SettingsPage({ searchParams }: PageProps<"/setting
 
         <section className="card flex flex-col gap-3">
           <h2 className="h2">Notifications</h2>
-          <Toggle name="notify.tasksDue" on={s.notify.tasksDue} label="Tasks due today" />
+          <Toggle name="notify.morningDigest" on={s.notify.morningDigest} label="Morning digest (tasks due today, future goals ready to start)" />
           <Toggle name="notify.taskReminder" on={s.notify.taskReminder} label="Day-before reminders (tasks that ask for one)" />
           <label className="flex flex-wrap items-center justify-between gap-2">
             <span>Time for task notifications</span>

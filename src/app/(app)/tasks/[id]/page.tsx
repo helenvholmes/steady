@@ -35,6 +35,15 @@ export default async function TaskPage({ params }: PageProps<"/tasks/[id]">) {
             <input className="field" type="date" name="dueDate" defaultValue={task.dueDate ?? ""} />
           </label>
         </div>
+        <label>
+          <span className="label">Repeat</span>
+          <select className="field" name="repeat" defaultValue={task.repeat ?? ""}>
+            <option value="">Doesn&apos;t repeat</option>
+            <option value="weekly">Weekly, on the due date&apos;s weekday</option>
+            <option value="monthly">Monthly, on the due date&apos;s day</option>
+          </select>
+          <span className="mt-1 block text-xs text-muted">Checking it off adds the next one. Without a due date, it starts today.</span>
+        </label>
         <label className="flex items-center gap-2">
           <input type="checkbox" name="remindDayBefore" defaultChecked={task.remindDayBefore} className="size-5 accent-[var(--accent)]" />
           Remind me the day before

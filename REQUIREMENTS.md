@@ -181,7 +181,7 @@ A metric is a number with a target and a target date, measured inside a goal.
 ## Tasks
 
 1. **Fields.** Title, goal, optional linked metric, optional start date and optional due date (a range covers windows like "renew passport, March 1 – April 15"), optional notes, done and done date, order.
-2. **Repeating tasks.** A task can repeat weekly (on a weekday) or monthly (on a day of the month, for example "pay rent, monthly on the 1st"). Checking one off creates the next one with the next date. A monthly day past the end of a short month falls on its last day.
+2. **Repeating tasks.** A task can repeat weekly (on its due date's weekday) or monthly (on its due date's day of the month, for example "pay rent, monthly on the 1st"), set on the task's page. Checking one off creates the next one with the same title, notes, linked metric, and reminder; a start date keeps its distance before the due date. A monthly day past the end of a short month falls on its last day, and the next month goes back to the usual day. A task checked off late skips dates already past, so the new one isn't already overdue. Unchecking and checking again doesn't create a second one. A repeating task without a due date starts today. Task lists mark repeating tasks with ↻.
 3. **Adding.** Title and date only on the first screen, so it takes under 10 seconds.
 4. **Past dates.** A task past its date says "date passed" in neutral text. No red, no count of missed tasks.
 5. **Reminders.** A notification on the morning a task is due (default 8:00 AM), and optionally the day before.

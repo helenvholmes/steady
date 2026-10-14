@@ -161,6 +161,12 @@ export const tasks = sqliteTable(
     startDate: day("start_date"),
     dueDate: day("due_date"),
     remindDayBefore: integer("remind_day_before", { mode: "boolean" }).notNull().default(false),
+    /** Weekly (same weekday as the due date) or monthly; checking one off creates the next (lib/tasks.ts). */
+    repeat: text("repeat", { enum: ["weekly", "monthly"] }),
+    /** Monthly only: the day of the month it falls on (a short month uses its last day). */
+    repeatDay: integer("repeat_day"),
+    /** The next task this one created when checked off, so unchecking and checking again doesn't make another. */
+    nextTaskId: integer("next_task_id"),
     done: integer("done", { mode: "boolean" }).notNull().default(false),
     doneDate: day("done_date"),
     order: integer("order").notNull().default(0),
@@ -214,7 +220,8 @@ export type Settings = {
   taskDueTime: string;
   quietStart: string;
   quietEnd: string;
-  notify: { tasksDue: boolean; taskReminder: boolean; countdownMilestone: boolean };
+  /** morningDigest: tasks due today and future goals reaching their start-by date, at taskDueTime. */
+  notify: { morningDigest: boolean; taskReminder: boolean; countdownMilestone: boolean };
   ai: { weights: boolean; highlights: boolean; highlightsIncludeNotes: boolean };
 };
 
@@ -259,7 +266,7 @@ export const pushSubscriptions = sqliteTable("push_subscriptions", {
   createdAt: timestamp("created_at").notNull(),
 });
 
-/** One row per notification sent. The key ("tasksDue:2026-10-12") keeps each one from going out twice. */
+/** One row per notification sent. The key ("morningDigest:2026-10-12") keeps each one from going out twice. */
 export const notificationLog = sqliteTable(
   "notification_log",
   {

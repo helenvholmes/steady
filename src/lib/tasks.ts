@@ -1,4 +1,4 @@
-import { daysBetween, formatDay } from "./dates";
+import { addDays, daysBetween, formatDay } from "./dates";
 
 type DatedTask = { done: boolean; startDate: string | null; dueDate: string | null };
 
@@ -21,3 +21,30 @@ export function taskWhen(t: DatedTask, today: string): string {
   if (diff > 1 && diff < 7) return formatDay(t.dueDate, { weekday: "short", month: "short", day: "numeric" });
   return short(t.dueDate);
 }
+
+export type Repeat = "weekly" | "monthly";
+
+const daysInMonth = (y: number, m: number) => new Date(Date.UTC(y, m, 0)).getUTCDate(); // m is 1–12
+
+/** The day after `day` that a repeating task falls on: a week later, or the next month on `repeatDay`. */
+function following(day: string, repeat: Repeat, repeatDay: number): string {
+  if (repeat === "weekly") return addDays(day, 7);
+  const [y, m] = day.split("-").map(Number);
+  const [ny, nm] = m === 12 ? [y + 1, 1] : [y, m + 1];
+  const d = Math.min(repeatDay, daysInMonth(ny, nm));
+  return `${ny}-${String(nm).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+}
+
+/**
+ * The due date of the next task in a repeating series: the next occurrence after this one's due date, skipping
+ * any that are already past, so a task checked off late doesn't create one that's already overdue.
+ */
+export function nextDueDate(dueDate: string, repeat: Repeat, repeatDay: number | null, today: string): string {
+  const anchor = repeatDay ?? Number(dueDate.slice(8, 10));
+  let next = following(dueDate, repeat, anchor);
+  while (next < today) next = following(next, repeat, anchor);
+  return next;
+}
+
+/** "Repeats weekly" / "Repeats monthly", for the task list's ↻ mark. */
+export const repeatLabel = (repeat: Repeat) => `Repeats ${repeat}`;

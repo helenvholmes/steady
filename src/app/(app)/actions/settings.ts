@@ -29,7 +29,7 @@ export async function saveSettingsForm(fd: FormData) {
   await saveSettings({
     ...f,
     frameAnimated: on("frameAnimated"),
-    notify: { tasksDue: on("notify.tasksDue"), taskReminder: on("notify.taskReminder"), countdownMilestone: on("notify.countdownMilestone") },
+    notify: { morningDigest: on("notify.morningDigest"), taskReminder: on("notify.taskReminder"), countdownMilestone: on("notify.countdownMilestone") },
     ai: { weights: on("ai.weights"), highlights: on("ai.highlights"), highlightsIncludeNotes: on("ai.highlightsIncludeNotes") },
   });
   done("/settings?saved=1");

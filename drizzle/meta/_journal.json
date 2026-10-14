@@ -29,6 +29,13 @@
       "when": 1791952955354,
       "tag": "0003_weights_summary",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "6",
+      "when": 1792000847261,
+      "tag": "0004_repeating_tasks",
+      "breakpoints": true
     }
   ]
 }

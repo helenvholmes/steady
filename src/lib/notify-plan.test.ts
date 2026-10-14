@@ -1,11 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { inQuietHours, planNotifications, type PlanInput } from "./notify-plan";
+import { digestBody, inQuietHours, planNotifications, type PlanInput } from "./notify-plan";
 
 const settings: PlanInput["settings"] = {
   taskDueTime: "08:00",
   quietStart: "22:00",
   quietEnd: "07:00",
-  notify: { tasksDue: true, taskReminder: true, countdownMilestone: true },
+  notify: { morningDigest: true, taskReminder: true, countdownMilestone: true },
 };
 // Monday Oct 12 2026; the test zone is UTC-6 in October.
 const at = (hhmm: string) => new Date(`2026-10-12T${hhmm}:00-06:00`);
@@ -14,21 +14,31 @@ const base: Omit<PlanInput, "now"> = {
   sentKeys: new Set<string>(),
   sentToday: 0,
   tasksDueToday: 2,
+  futureGoalsReady: 0,
   remindersForTomorrow: 0,
   countdownMilestones: [],
 };
 
 describe("notification planner", () => {
-  it("sends the tasks-due count at its time, once", () => {
+  it("sends the morning digest at its time, once", () => {
     expect(planNotifications({ ...base, now: at("07:55") })).toEqual([]);
     const [n] = planNotifications({ ...base, now: at("08:05") });
-    expect(n).toMatchObject({ key: "tasksDue:2026-10-12", body: "2 tasks are due today.", url: "/" });
-    expect(planNotifications({ ...base, tasksDueGoalId: 7, now: at("08:05") })[0].url).toBe("/goals/7");
-    expect(planNotifications({ ...base, now: at("08:10"), sentKeys: new Set(["tasksDue:2026-10-12"]) })).toEqual([]);
+    expect(n).toMatchObject({ key: "morningDigest:2026-10-12", body: "2 tasks are due today.", url: "/" });
+    expect(planNotifications({ ...base, digestGoalId: 7, now: at("08:05") })[0].url).toBe("/goals/7");
+    expect(planNotifications({ ...base, now: at("08:10"), sentKeys: new Set(["morningDigest:2026-10-12"]) })).toEqual([]);
   });
 
-  it("sends nothing when no tasks are due", () => {
+  it("sends nothing when there's nothing to say", () => {
     expect(planNotifications({ ...base, tasksDueToday: 0, now: at("08:05") })).toEqual([]);
+  });
+
+  it("counts future goals ready to start, with or without tasks", () => {
+    expect(digestBody(0, 1)).toBe("1 future goal is ready to start.");
+    expect(digestBody(3, 1)).toBe("3 tasks due today · 1 future goal ready to start");
+    expect(digestBody(1, 2)).toBe("1 task due today · 2 future goals ready to start");
+    expect(digestBody(0, 0)).toBeNull();
+    const [n] = planNotifications({ ...base, tasksDueToday: 0, futureGoalsReady: 1, digestGoalId: 4, now: at("08:00") });
+    expect(n).toMatchObject({ type: "morningDigest", body: "1 future goal is ready to start.", url: "/goals/4" });
   });
 
   it("does not send late beyond the window or in quiet hours", () => {
@@ -44,9 +54,9 @@ describe("notification planner", () => {
   it("respects switches and the daily cap, in priority order", () => {
     const busy = { ...base, remindersForTomorrow: 1, countdownMilestones: [{ goalId: 1, mark: 365 }] };
     const all = planNotifications({ ...busy, now: at("09:00") });
-    expect(all.map((n) => n.type)).toEqual(["tasksDue", "taskReminder", "countdownMilestone"]);
-    expect(planNotifications({ ...busy, sentToday: 4, now: at("09:00") }).map((n) => n.type)).toEqual(["tasksDue"]);
-    const off = { ...settings, notify: { ...settings.notify, tasksDue: false } };
+    expect(all.map((n) => n.type)).toEqual(["morningDigest", "taskReminder", "countdownMilestone"]);
+    expect(planNotifications({ ...busy, sentToday: 4, now: at("09:00") }).map((n) => n.type)).toEqual(["morningDigest"]);
+    const off = { ...settings, notify: { ...settings.notify, morningDigest: false } };
     expect(planNotifications({ ...busy, settings: off, now: at("09:00") }).map((n) => n.type)).toEqual([
       "taskReminder",
       "countdownMilestone",

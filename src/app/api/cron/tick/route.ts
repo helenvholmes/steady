@@ -17,7 +17,7 @@ export async function GET(request: NextRequest) {
   const now = new Date();
   const today = localDay(now);
   const tomorrow = addDays(today, 1);
-  const [settings, todaysLog, allKeys, countdownMilestones, openTasks] = await Promise.all([
+  const [settings, todaysLog, allKeys, countdownMilestones, openTasks, futureGoals] = await Promise.all([
     getSettings(),
     db.select({ key: schema.notificationLog.key }).from(schema.notificationLog).where(eq(schema.notificationLog.day, today)),
     db.select({ key: schema.notificationLog.key }).from(schema.notificationLog),
@@ -28,11 +28,16 @@ export async function GET(request: NextRequest) {
       .from(schema.tasks)
       .innerJoin(schema.goals, eq(schema.goals.id, schema.tasks.goalId))
       .where(and(eq(schema.tasks.done, false), eq(schema.goals.status, "active"))),
+    // Future goals reaching their start-by date today; each is counted once, in that morning's digest.
+    db
+      .select({ id: schema.goals.id })
+      .from(schema.goals)
+      .where(and(eq(schema.goals.status, "future"), eq(schema.goals.startByDate, today))),
   ]);
 
   const dueToday = openTasks.filter((t) => t.dueDate === today);
   const reminders = openTasks.filter((t) => t.dueDate === tomorrow && t.remindDayBefore);
-  const onlyGoal = (list: typeof openTasks) => (new Set(list.map((t) => t.goalId)).size === 1 ? list[0].goalId : null);
+  const onlyGoal = (ids: number[]) => (new Set(ids).size === 1 ? ids[0] : null);
 
   const due = planNotifications({
     now,
@@ -40,9 +45,10 @@ export async function GET(request: NextRequest) {
     sentKeys: new Set(allKeys.map((r) => r.key)),
     sentToday: todaysLog.length,
     tasksDueToday: dueToday.length,
+    futureGoalsReady: futureGoals.length,
     remindersForTomorrow: reminders.length,
-    tasksDueGoalId: onlyGoal(dueToday),
-    remindersGoalId: onlyGoal(reminders),
+    digestGoalId: onlyGoal([...dueToday.map((t) => t.goalId), ...futureGoals.map((g) => g.id)]),
+    remindersGoalId: onlyGoal(reminders.map((t) => t.goalId)),
     countdownMilestones,
   });
 
