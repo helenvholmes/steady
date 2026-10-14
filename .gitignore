@@ -1,0 +1,18 @@
+node_modules/
+.next/
+out/
+build/
+next-env.d.ts
+*.tsbuildinfo
+
+# Local database and secrets
+data/
+.env*.local
+.env
+
+.DS_Store
+.vercel
+
+# Drawing generators (their own React 18; outputs are committed)
+scripts/drawings/node_modules/
+scripts/drawings/package-lock.json

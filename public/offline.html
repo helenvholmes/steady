@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Steady</title>
+    <style>
+      :root {
+        --bg: #ffffff;
+        --ink: #1d2433;
+        --muted: #6c7280;
+        --accent: #1d2433;
+        --accent-ink: #ffffff;
+        --frame: #5dbf9d;
+        color-scheme: light dark;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg: #12151c;
+          --ink: #e6e8ee;
+          --muted: #9aa1ad;
+          --accent: #e6e8ee;
+          --accent-ink: #12151c;
+          --frame: #4a9e81;
+        }
+      }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        box-sizing: border-box;
+        display: grid;
+        place-items: center;
+        background: var(--bg);
+        color: var(--ink);
+        border: clamp(10px, 2vw, 22px) solid var(--frame);
+        font-family: "EB Garamond", Georgia, serif;
+        font-size: 17px;
+      }
+      main {
+        max-width: 22rem;
+        padding: 16px;
+        text-align: center;
+      }
+      h1 {
+        font-size: 1.75rem;
+        font-weight: 400;
+        font-style: italic;
+        margin: 0 0 0.5rem;
+      }
+      p {
+        color: var(--muted);
+        line-height: 1.5;
+        margin: 0 0 1.25rem;
+      }
+      button {
+        font: inherit;
+        border: 0;
+        padding: 0.75rem 1.5rem;
+        text-transform: uppercase;
+        letter-spacing: 0.12em;
+        background: var(--accent);
+        color: var(--accent-ink);
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>No connection</h1>
+      <p>Steady will open when you're back online.</p>
+      <button type="button" onclick="location.reload()">Try again</button>
+    </main>
+    <script>
+      window.addEventListener("online", () => location.reload());
+    </script>
+  </body>
+</html>

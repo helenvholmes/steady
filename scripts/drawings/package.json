@@ -1,0 +1,15 @@
+{
+  "name": "steady-drawings-generator",
+  "private": true,
+  "type": "module",
+  "description": "Builds goal drawing data from Open Peeps (CC0, Pablo Stanley) and Doodle Icons (CC0, Khushmeen Sidhu). Isolated because the packages need older React versions.",
+  "scripts": {
+    "generate": "node peeps.mjs && node doodles.mjs"
+  },
+  "dependencies": {
+    "@opeepsfun/open-peeps": "1.0.6",
+    "doodle-icons": "1.1.0",
+    "react": "18.3.1",
+    "react-dom": "18.3.1"
+  }
+}

@@ -1,0 +1,207 @@
+@import "tailwindcss";
+
+/*
+ * Design tokens (the "Literary" look): white page in a colored frame, EB Garamond, navy ink and rules.
+ * Light and dark follow the device setting. The frame color is the user's choice (lib/frame.ts), set by the app layout.
+ */
+:root {
+  color-scheme: light dark;
+  font-size: 17px;
+
+  --bg: #ffffff;
+  --surface: #ffffff;
+  --ink: #1d2433;
+  --muted: #6c7280;
+  --line: #e6e8eb;
+  --accent: #1d2433;
+  --accent-ink: #ffffff;
+  --accent-soft: #e9ecf0;
+  --warm: #8a6420; /* "behind": amber, never red */
+  --warm-soft: #f6efe0;
+  --frame: #5dbf9d;
+  /* Progress bar track */
+  --track: var(--accent-soft);
+  /* Shadow under a lifted card */
+  --lift-shadow: 0 14px 30px -12px rgb(29 36 51 / 0.28), 0 4px 10px -4px rgb(29 36 51 / 0.12);
+
+  --font-body: var(--ff-garamond), Georgia, serif;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #12151c;
+    --surface: #12151c;
+    --ink: #e6e8ee;
+    --muted: #9aa1ad;
+    --line: #2a303b;
+    --accent: #e6e8ee;
+    --accent-ink: #12151c;
+    --accent-soft: #252b37;
+    --warm: #dcb56c;
+    --warm-soft: #2e2719;
+    --frame: #4a9e81;
+    --lift-shadow: 0 14px 30px -12px rgb(0 0 0 / 0.7), 0 4px 10px -4px rgb(0 0 0 / 0.5);
+  }
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-ink: var(--ink);
+  --color-muted: var(--muted);
+  --color-line: var(--line);
+  --color-accent: var(--accent);
+  --color-accent-ink: var(--accent-ink);
+  --color-accent-soft: var(--accent-soft);
+  --color-warm: var(--warm);
+  --color-warm-soft: var(--warm-soft);
+  --font-sans: var(--font-body);
+}
+
+/* Tailwind's base styles give buttons the arrow cursor; every clickable control here shows the pointer instead. */
+@layer base {
+  button:not(:disabled),
+  [role="button"]:not([aria-disabled="true"]),
+  summary,
+  select,
+  label:has(> input[type="radio"]),
+  label:has(> input[type="checkbox"]) {
+    cursor: pointer;
+  }
+}
+
+html {
+  background: var(--bg);
+  color: var(--ink);
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* The green frame around the page. */
+body {
+  border: clamp(10px, 2vw, 22px) solid var(--frame);
+}
+
+/* Shared pieces, as utilities so they can build on each other with @apply. */
+@utility card {
+  @apply border-b border-line bg-surface p-4 text-ink;
+}
+@utility btn {
+  @apply inline-flex min-h-11 items-center justify-center gap-2 border border-line bg-surface px-4 text-[15px] font-medium tracking-[0.12em] whitespace-nowrap uppercase active:opacity-70 disabled:opacity-50;
+}
+@utility btn-primary {
+  @apply btn border-transparent bg-accent text-accent-ink;
+}
+@utility btn-soft {
+  @apply btn border-transparent bg-accent-soft text-ink;
+}
+@utility field {
+  @apply min-h-11 w-full border border-line bg-surface px-3 text-[16px] outline-none focus:border-accent;
+}
+@utility label {
+  @apply mb-1 block text-sm font-medium tracking-[0.12em] text-muted uppercase;
+}
+@utility h1 {
+  @apply text-[2rem] leading-[1.15] font-normal italic;
+}
+@utility h2 {
+  @apply text-[0.8125rem] font-medium tracking-[0.14em] uppercase;
+}
+/* Goal titles on cards */
+@utility title {
+  @apply font-normal;
+}
+/*
+ * Goal cards on the home screen lift toward you on hover: a little bigger, a little higher, with a soft shadow.
+ * Uses the scale and translate properties (not transform), so drag-to-reorder's transform still works.
+ * Pointer devices only, so a tap on a phone doesn't leave a card stuck lifted; reduced motion keeps only the shadow.
+ */
+@utility card-lift {
+  /* No divider line; rounded corners so the lifted card reads as a raised tile. (&.card outranks the card's border.) */
+  border-radius: 8px;
+  &.card {
+    border-bottom-width: 0;
+  }
+  transition:
+    scale 220ms ease-in-out,
+    translate 220ms ease-in-out,
+    box-shadow 220ms ease-in-out;
+  @media (hover: hover) {
+    /* Keyboard focus inside (not focus left on the drag handle by a mouse drag) lifts it too. */
+    &:hover,
+    &:has(:focus-visible) {
+      scale: 1.03;
+      translate: 0 -3px;
+      box-shadow: var(--lift-shadow);
+      z-index: 5;
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    transition: box-shadow 220ms ease-in-out;
+    &:hover,
+    &:has(:focus-visible) {
+      scale: none;
+      translate: none;
+    }
+  }
+}
+@utility chip {
+  @apply inline-flex min-h-9 items-center rounded-full border border-line px-3 text-sm;
+  &[data-on="true"] {
+    @apply border-accent bg-accent-soft;
+  }
+}
+
+/*
+ * Animated gradient frame (components/animated-frame.tsx): a fixed layer behind the page holding Fancy Components'
+ * AnimatedGradient. Only the frame shows it; the page covers the rest.
+ */
+.animated-frame {
+  position: fixed;
+  /* Larger than the screen: blur fades a layer's own edges, and the frame sits right at the screen's edge. */
+  inset: -15vmax;
+  z-index: -1;
+  overflow: hidden;
+  background: var(--frame);
+}
+/* The circles' movement, from Fancy Components (fancycomponents.dev, MIT; see THIRD_PARTY_NOTICES.md). */
+@keyframes background-gradient {
+  0%,
+  100% {
+    transform: translate(0, 0);
+  }
+  20% {
+    transform: translate(calc(100% * var(--tx-1, 1)), calc(100% * var(--ty-1, 1)));
+  }
+  40% {
+    transform: translate(calc(100% * var(--tx-2, -1)), calc(100% * var(--ty-2, 1)));
+  }
+  60% {
+    transform: translate(calc(100% * var(--tx-3, 1)), calc(100% * var(--ty-3, -1)));
+  }
+  80% {
+    transform: translate(calc(100% * var(--tx-4, -1)), calc(100% * var(--ty-4, -1)));
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  /* The component sets its animation inline, so this needs !important. */
+  .animated-frame svg {
+    animation: none !important;
+  }
+}
+
+/* Goal drawings (people and icons) are navy ink; in dark mode they flip to light ink on dark. */
+@media (prefers-color-scheme: dark) {
+  .drawing {
+    filter: invert(0.93) hue-rotate(180deg);
+  }
+}
+
+/* Section labels sit over a short navy rule. */
+section.card > div:first-child > h2::after {
+  content: "";
+  display: block;
+  width: 1.75rem;
+  height: 3px;
+  margin-top: 0.5rem;
+  background: var(--accent);
+}

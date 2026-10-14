@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "steady",
+      "runtimeExecutable": "bash",
+      "runtimeArgs": ["-c", "source ~/.nvm/nvm.sh >/dev/null && nvm use 22 >/dev/null && npx next dev --port 3100 --hostname 127.0.0.1"],
+      "port": 3100
+    }
+  ]
+}
